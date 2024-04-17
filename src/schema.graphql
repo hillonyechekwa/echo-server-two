@@ -1,0 +1,21 @@
+type User {
+    id: ID!
+    username: String
+    emai: String
+    password: String
+    bio: String
+    role: Role
+    messages: Message[]
+    chats: Chat[]
+}
+
+type Message{
+    id: ID!
+}
+
+type Chat{}
+
+enum Role {
+    USER
+    ADMIN
+}
