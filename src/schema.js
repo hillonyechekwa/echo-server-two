@@ -4,7 +4,7 @@ const typeDefs = gql`
     scalar DateTime
 
     type User {
-        id: String!
+        id: ID!
         username: String
         email: String
         password: String
@@ -17,7 +17,7 @@ const typeDefs = gql`
     }
 
     type Message{
-        id: String!
+        id: ID!
         content: String!
         sender: User!
         mediaType: String!
@@ -28,7 +28,7 @@ const typeDefs = gql`
     }
 
     input MessageInput{
-        content: String!
+        content: ID!
         sender: User!
         chatId: Chat!
         status: MESSAGE_STATUS
@@ -36,11 +36,12 @@ const typeDefs = gql`
     }
 
     type Chat{
-        id: String!
-        participants: [User!]
+        id: ID!
+        user: User!
+        participant: User!
         messages: [Message]
         createdAt: DateTime!
-        updatedAt: DateTime!
+        updatedAt: DateTime
     }
 
     type Contact{
@@ -70,12 +71,9 @@ const typeDefs = gql`
 
 
     type Query{
-        #chats(username: String!): [Chat!]
-        #chat(id : ID!): Chat!
-        #messages(username: String!): [Messages!]!
-        contacts: [Contact!]
-        contact(id: !ID, name: String!): Contact!
-        chats: [Chat!] @isParticipant(if: Boolean!)
+        contacts: [Contact!]!
+        #contact(id: !ID, name: String!): Contact!
+        #chats: [Chat!] @isParticipant(if: Boolean!)
         users: [User!]!
         user(username: String!): User!
         me: User!
@@ -86,8 +84,12 @@ const typeDefs = gql`
         signIn(email: String, password: String): String!
         newChat(participantId: !ID): Chat!
         sendMessage(details: MessageInput!): Message!
-        deleteMessage(messageId: String!): Boolean!
-        editMessage(messageId: String!, content: String!): Message!
+        deleteMessage(messageId: ID!): Boolean!
+        editMessage(messageId: ID!, content: String!): Message!
+        #updateProfile
+        #addContact
+        #removeContact
+        #blockContact
     }
 
     type Subscription{
