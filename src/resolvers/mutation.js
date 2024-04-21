@@ -2,11 +2,12 @@ import jwt from "jsonwebtoken"
 import bcrypt from 'bcrypt';
 import { GraphQLError } from "graphql";
 import dotenv from 'dotenv'
+import mongoose from 'mongoose' //for object types
 dotenv.config()
 
 
 export default {
-    signUp: async (parent, {email, password}, {prisma}) => {
+    signUp: async (parent, {username, email, password}, {models}) => {
         var email = email.trim().toLowerCase()
 
         var saltRounds = 10;
@@ -20,60 +21,53 @@ export default {
         var encryptedPassword = await bcrypt.hash(password, saltRounds);
 
         try{
-            const user = await prisma.user.create({
-                data: {
+            const user = await models.User.create({
+                    username,
                     email,
                     password: encryptedPassword
-                }
             })
-            return jwt.sign({_id: user.id}, process.env.JWT_SECRET)
+            return jwt.sign({id: user._id}, process.env.JWT_SECRET)
         }catch(error){
             console.error(error);
             throw new Error("error creating account");
         }
 
     },
-    signIn: async (parent, {email, password}, {prisma}) => {
+    signIn: async (parent, {username, email, password}, {models}) => {
         if(email){
             var email = email.trim().toLowerCase()
         }
 
-        const findUser = await prisma.user.findMany({
-            where: {
-                    email:{
-                        contains: email
-                    }
-                }
+        const user = await models.User.findOne({
+            $or: [{email}, {username}]
         })
 
-        if(!findUser){
+        if(!user){
             throw new GraphQLError('Error signing in')
         }
 
-        const hashPassword = findUser.map(user => user.password)
 
-        const userid = findUser.map(user => user.id)
+        const valid = await bcrypt.compare(password, user.password);
 
-
-        const matches = await Promise.all(
-            hashPassword.map( async (hash) => {
-                return bcrypt.compare(password, hash)
-            })
-        )
-
-
-        const match = matches.includes(true)
-
-
-        if(!match){
-            throw new GraphQLError('Error signing in!');
+        if(!valid){
+            throw new GraphQLError('Error Signing in')
         }
 
 
-        let matchIndex = matches.indexOf(match);
-
-
-        return jwt.sign({_id: userId[matchIndex]}, process.env.JWT_SECRET)
+        return jwt.sign({id: user._id}, process.env.JWT_SECRET)
         
+    },
+    newChat: async(parent, {participantId}, {models, user}) => {
+        //user check?
+        if(!user){
+            throw new GraphQLError("you need to be signedin to carry out this action!")
+        }
+
+        let participant = models.User.findById(participantId)
+
+        return await models.Chat.create({
+            user: user.id,
+            participant
+        })
     }
 }
