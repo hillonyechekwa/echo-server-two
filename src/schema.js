@@ -2,6 +2,7 @@ import {gql} from 'graphql-tag';
 
 const typeDefs = gql`
     scalar DateTime
+    scalar File
 
     type User {
         id: ID!
@@ -28,9 +29,9 @@ const typeDefs = gql`
     }
 
     input MessageInput{
-        content: ID!
+        content: String!
         sender: User!
-        chatId: Chat!
+        chat: Chat!
         status: MESSAGE_STATUS
         mediaType: String!
     }
@@ -71,6 +72,8 @@ const typeDefs = gql`
 
 
     type Query{
+        getAvatar: String! #get url string from s3
+        getImage: String #do the same as above
         contacts: [Contact!]!
         #contact(id: !ID, name: String!): Contact!
         #chats: [Chat!] @isParticipant(if: Boolean!)
@@ -86,6 +89,8 @@ const typeDefs = gql`
         sendMessage(details: MessageInput!): Message!
         deleteMessage(messageId: ID!): Boolean!
         editMessage(messageId: ID!, content: String!): Message!
+        uploadImage(file: File!): Boolean!
+        uploadAvatar(file: File!): Boolean!
         #updateProfile
         #addContact
         #removeContact
